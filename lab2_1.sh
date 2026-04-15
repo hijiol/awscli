@@ -90,3 +90,4 @@ echo ""
 echo "==> Cleaning up local files..."
 rm -f list-buckets.py index.html
 echo "    Done."
+
