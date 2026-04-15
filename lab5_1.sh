@@ -39,9 +39,9 @@ sed -i "s|<FMI_1>|$TABLE_NAME|g" python_3/create_table.py
 
 echo "==> Checking if table already exists..."
 TABLE_EXISTS=$(aws dynamodb list-tables --region $REGION \
-  --query "TableNames[?@=='$TABLE_NAME']" --output text)
+  --query "length(TableNames[?@=='$TABLE_NAME'])" --output text)
 
-if [ -n "$TABLE_EXISTS" ]; then
+if [ "$TABLE_EXISTS" -gt 0 ]; then
   echo "    Table '$TABLE_NAME' already exists, skipping creation."
 else
   echo "==> Creating DynamoDB table: $TABLE_NAME..."
@@ -209,7 +209,7 @@ GSI_STATUS=$(aws dynamodb describe-table \
   --query "Table.GlobalSecondaryIndexes[?IndexName=='special_GSI'].IndexStatus" \
   --output text)
 
-if [ -n "$GSI_STATUS" ]; then
+if [ -n "$GSI_STATUS" ] && [ "$GSI_STATUS" != "None" ]; then
   echo "    GSI already exists (status: $GSI_STATUS), skipping creation."
 else
   echo "==> Running add_gsi.py..."
