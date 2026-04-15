@@ -19,6 +19,13 @@ rm -f "$_ENV_CLEAN"
 
 # --- Credential check ---
 echo "==> Checking AWS credentials..."
+
+if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ] || [ -z "$AWS_SESSION_TOKEN" ]; then
+  echo "ERROR: One or more credentials are missing from .env."
+  echo "       Make sure AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN are all filled in."
+  exit 1
+fi
+
 IDENTITY=$(aws sts get-caller-identity --output text 2>&1)
 if [ $? -ne 0 ]; then
   echo "ERROR: AWS credentials are expired or invalid."
