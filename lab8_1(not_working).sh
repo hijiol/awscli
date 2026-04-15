@@ -65,18 +65,19 @@ LABIDE_SG=$(aws ec2 describe-instances \
   --query "Reservations[0].Instances[0].SecurityGroups[0].GroupId" \
   --output text --region $REGION)
 
-# Port 3000 on LabIDE SG (browser access to the app)
+# Port 3000 on LabIDE SG (browser access to the app) — check for current IP specifically
 EXISTS=$(aws ec2 describe-security-groups \
   --group-ids "$LABIDE_SG" \
-  --query "SecurityGroups[0].IpPermissions[?FromPort==\`3000\`].FromPort" \
+  --query "SecurityGroups[0].IpPermissions[?FromPort==\`3000\`].IpRanges[?CidrIp=='${MY_IP}/32'].CidrIp" \
   --output text --region $REGION)
 if [ -z "$EXISTS" ] || [ "$EXISTS" = "None" ]; then
   aws ec2 authorize-security-group-ingress \
     --group-id "$LABIDE_SG" --protocol tcp --port 3000 \
-    --cidr "${MY_IP}/32" --region $REGION > /dev/null
-  echo "    Port 3000 opened on LabIDE SG $LABIDE_SG."
+    --cidr "${MY_IP}/32" --region $REGION 2>/dev/null \
+    && echo "    Port 3000 opened for ${MY_IP} on LabIDE SG $LABIDE_SG." \
+    || echo "    Port 3000 rule already exists."
 else
-  echo "    Port 3000 already open on LabIDE SG."
+  echo "    Port 3000 already open for ${MY_IP}."
 fi
 
 # Port 3306 on all MySQL SGs (for mysqldump from LabIDE)
@@ -106,16 +107,22 @@ fix_nacl() {
     --query "NetworkAcls[0].NetworkAclId" \
     --output text --region $REGION)
   echo "    $LABEL -> NACL $NACL"
+  # Delete rule 1 first (ignore errors) then recreate as allow-all.
+  # This ensures we don't silently keep an existing DENY rule at that number.
+  aws ec2 delete-network-acl-entry --network-acl-id "$NACL" \
+    --rule-number 1 --ingress --region $REGION 2>/dev/null || true
+  aws ec2 delete-network-acl-entry --network-acl-id "$NACL" \
+    --rule-number 1 --egress --region $REGION 2>/dev/null || true
   aws ec2 create-network-acl-entry --network-acl-id "$NACL" \
-    --rule-number 90 --protocol -1 --rule-action allow --ingress \
+    --rule-number 1 --protocol -1 --rule-action allow --ingress \
     --cidr-block "0.0.0.0/0" --region $REGION 2>/dev/null \
-    && echo "    $LABEL NACL: allow-all ingress added." \
-    || echo "    $LABEL NACL: allow-all ingress already exists."
+    && echo "    $LABEL NACL: allow-all ingress added (rule 1)." \
+    || echo "    $LABEL NACL: ingress rule already exists."
   aws ec2 create-network-acl-entry --network-acl-id "$NACL" \
-    --rule-number 90 --protocol -1 --rule-action allow --egress \
+    --rule-number 1 --protocol -1 --rule-action allow --egress \
     --cidr-block "0.0.0.0/0" --region $REGION 2>/dev/null \
-    && echo "    $LABEL NACL: allow-all egress added." \
-    || echo "    $LABEL NACL: allow-all egress already exists."
+    && echo "    $LABEL NACL: allow-all egress added (rule 1)." \
+    || echo "    $LABEL NACL: egress rule already exists."
 }
 fix_nacl "$LABIDE_ID"         "LabIDE"
 fix_nacl "$MYSQL_INSTANCE_ID" "MySQL"
