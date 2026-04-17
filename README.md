@@ -15,6 +15,21 @@ Use Docker for a consistent environment — avoids platform differences with `se
 
 ### Run a lab
 
+**PowerShell (Windows):**
+```powershell
+# First run — builds the image automatically, then runs the script
+.\run_lab.ps1 lab5_1.sh
+
+# Force a rebuild (e.g. after pulling new script changes)
+.\run_lab.ps1 lab5_1.sh -Build
+```
+
+If PowerShell blocks the script, run this once first:
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+**Git Bash / Mac / Linux:**
 ```bash
 # First run — builds the image automatically, then runs the script
 ./run_lab.sh lab5_1.sh

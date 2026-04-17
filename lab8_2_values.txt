@@ -1,0 +1,9 @@
+IDE VPC ID: vpc-0946d75a6fdb6be2a
+IDE Availability Zone: us-east-1a
+IDE subnet ID: subnet-0301308d0c6ceac61
+extraSubnetForRds subnet ID: subnet-017aada0e7e6565ab
+IDE security group ID: sg-01a134e3b87b90ee5
+Database endpoint: supplierdb.cluster-csn3dsr3mlw3.us-east-1.rds.amazonaws.com
+Repository URI: 976339170106.dkr.ecr.us-east-1.amazonaws.com/cafe/node-web-app
+Elastic Beanstalk URL: 
+WebsiteURL: http://c205412a5238424l14701291t1w976339170106-s3bucket-rfeyimupjbi1.s3-website-us-east-1.amazonaws.com
